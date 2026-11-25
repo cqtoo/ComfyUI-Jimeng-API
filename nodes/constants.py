@@ -18,6 +18,8 @@ MIN_IMAGE_PIXELS_V5 = 3686400
 MAX_IMAGE_PIXELS_V5 = 10404496
 MIN_IMAGE_PIXELS_V5_PRO = 1280 * 720
 MAX_IMAGE_PIXELS_V5_PRO = 2048 * 2048
+MIN_IMAGE_PIXELS_V5_5 = 1280 * 720
+MAX_IMAGE_PIXELS_V5_5 = 4624220
 MIN_ASPECT_RATIO = 1.0 / 16.0
 MAX_ASPECT_RATIO = 16.0
 
@@ -177,6 +179,8 @@ LOG_TRANSLATIONS = {
         "err_seedance25_editing_params": "Seedance 2.5 使用参考视频进行编辑或延长时，宽高比必须为 adaptive，并启用智能时长。",
         "err_request_body_too_large": "最终请求体超过 64 MiB 限制（上限 {max_bytes} 字节，当前 {current_bytes} 字节）。请减少参考素材。",
         "err_seedream5_pro_thinking_required": "Seedream 5 Pro 使用参考图时必须开启思考模式。",
+        "err_seedream55_layer_single_image": "Seedream 5.5 图层拆分必须且仅能输入 1 张参考图。",
+        "err_seedream55_layer_size": "Seedream 5.5 图层拆分仅支持 1K、1.5K、2K 或 auto 分辨率档位。",
         "err_gen_model": "模型 {model} 生成失败: {e}",
         "err_img_limit_10": "输入图像数量不能超过 10 张。",
         "err_img_limit_15": "输入图像数 ({n}) 与最大生成数 ({max}) 之和不能超过 15。",
@@ -353,6 +357,8 @@ LOG_TRANSLATIONS = {
         "err_seedance25_editing_params": "Seedance 2.5 video editing or extension requires the adaptive aspect ratio and auto duration.",
         "err_request_body_too_large": "The final request body exceeds the 64 MiB limit (maximum {max_bytes} bytes; current {current_bytes} bytes). Reduce reference media.",
         "err_seedream5_pro_thinking_required": "Thinking must be enabled when Seedream 5 Pro uses reference images.",
+        "err_seedream55_layer_single_image": "Seedream 5.5 layer decomposition requires exactly one reference image.",
+        "err_seedream55_layer_size": "Seedream 5.5 layer decomposition only supports the 1K, 1.5K, 2K, or auto size tier.",
         "err_gen_model": "Failed to generate image with model {model}: {e}",
         "err_img_limit_10": "Parameter Error: The number of input images cannot exceed 10.",
         "err_img_limit_15": "Parameter Error: The sum of input images ({n}) and max generated images ({max}) cannot exceed 15.",

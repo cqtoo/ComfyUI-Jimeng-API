@@ -33,6 +33,7 @@ from .executor import JimengGenerationExecutor
 from .models_config import (
     SEEDREAM_4_MODEL_MAP,
     SEEDREAM_5_MODEL_MAP,
+    SEEDREAM_5_5_UI_MODEL,
     SEEDREAM_5_PRO_UI_MODEL,
     SEEDREAM_3_MODELS,
 )
@@ -48,6 +49,8 @@ from .constants import (
     MAX_IMAGE_PIXELS_V5,
     MIN_IMAGE_PIXELS_V5_PRO,
     MAX_IMAGE_PIXELS_V5_PRO,
+    MIN_IMAGE_PIXELS_V5_5,
+    MAX_IMAGE_PIXELS_V5_5,
     MIN_ASPECT_RATIO,
     MAX_ASPECT_RATIO,
 )
@@ -55,6 +58,7 @@ from .nodes_image_schema import (
     RECOMMENDED_SIZES_V3,
     RECOMMENDED_SIZES_V4,
     RECOMMENDED_SIZES_V5,
+    RECOMMENDED_SIZES_V5_5,
     RECOMMENDED_SIZES_V5_PRO,
     get_image_generation_inputs,
 )
@@ -95,6 +99,31 @@ def prepare_seedream5_pro_size(prompt: str, size: str, width: int, height: int):
     if not _prompt_declares_aspect_ratio(final_prompt):
         final_prompt = f"{final_prompt.rstrip()}\nAspect Ratio: {aspect_ratio}".strip()
     return final_prompt, api_size
+
+def _json_safe_metadata(value):
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        return {key: _json_safe_metadata(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_metadata(item) for item in value]
+    for method_name in ("model_dump", "to_dict", "dict"):
+        method = getattr(value, method_name, None)
+        if callable(method):
+            try:
+                return _json_safe_metadata(method())
+            except TypeError:
+                pass
+    return str(value)
+
+
+def prepare_seedream5_5_size(size, width, height):
+    if size == "Custom":
+        return validate_custom_size(
+            width, height, MIN_IMAGE_PIXELS_V5_5, MAX_IMAGE_PIXELS_V5_5
+        )
+    return (size or "").split(" ")[0]
+
 
 def validate_custom_size(width, height, min_pixels, max_pixels):
     """
@@ -472,6 +501,35 @@ class JimengSeedream5(comfy_io.ComfyNode):
 
     @staticmethod
     def _model_inputs(model_version):
+        if model_version == SEEDREAM_5_5_UI_MODEL:
+            return [
+                comfy_io.String.Input("prompt", multiline=True, default=""),
+                *get_image_generation_inputs(
+                    RECOMMENDED_SIZES_V5_5,
+                    default_width=2048,
+                    default_height=2048,
+                )[:-2],
+                comfy_io.Int.Input(
+                    "generation_count", default=1, min=1, max=MAX_GENERATION_COUNT
+                ),
+                comfy_io.Boolean.Input(
+                    "thinking",
+                    default=True,
+                    tooltip="Optimize the prompt before generation.",
+                ),
+                comfy_io.Combo.Input(
+                    "background",
+                    options=["auto", "transparent", "opaque"],
+                    default="auto",
+                ),
+                comfy_io.Boolean.Input("layer_decomposition", default=False),
+                comfy_io.Int.Input(
+                    "layer_max_images", default=30, min=2, max=100
+                ),
+                comfy_io.Boolean.Input("text_recognition", default=False),
+                comfy_io.Boolean.Input("watermark", default=False),
+            ]
+
         if model_version == SEEDREAM_5_PRO_UI_MODEL:
             return [
                 comfy_io.String.Input("prompt", multiline=True, default=""),
@@ -512,8 +570,10 @@ class JimengSeedream5(comfy_io.ComfyNode):
             display_name="Jimeng Seedream 5",
             category=GLOBAL_CATEGORY,
             description=(
-                "Generate images with Seedream 5 Pro or Lite. Pro supports prompt "
-                "optimization; Lite supports grouped generation and web search."
+                "Generate images with Seedream 5.5, 5.0 Pro or Lite. 5.5 supports "
+                "1K/1.5K/2K tiers, RGBA backgrounds and layer decomposition; Pro "
+                "supports prompt optimization; Lite supports grouped generation "
+                "and web search."
             ),
             inputs=[
                 JimengClientType.Input("client"),
@@ -551,6 +611,10 @@ class JimengSeedream5(comfy_io.ComfyNode):
         generation_count=1,
         watermark=False,
         thinking=True,
+        background="auto",
+        layer_decomposition=False,
+        layer_max_images=30,
+        text_recognition=False,
         images=None,
         **kwargs,
     ) -> comfy_io.NodeOutput:
@@ -573,20 +637,38 @@ class JimengSeedream5(comfy_io.ComfyNode):
             generation_count = model_config.get("generation_count", generation_count)
             watermark = model_config.get("watermark", watermark)
             thinking = model_config.get("thinking", thinking)
+            background = model_config.get("background", background)
+            layer_decomposition = model_config.get(
+                "layer_decomposition", layer_decomposition
+            )
+            layer_max_images = model_config.get(
+                "layer_max_images", layer_max_images
+            )
+            text_recognition = model_config.get(
+                "text_recognition", text_recognition
+            )
 
         model_id = SEEDREAM_5_MODEL_MAP.get(model_version)
         if not model_id:
             raise JimengException(get_text("err_model_not_supported").format(model=model_version))
 
+        is_5_5 = model_version == SEEDREAM_5_5_UI_MODEL
         is_pro = model_version == SEEDREAM_5_PRO_UI_MODEL
+        is_single_image_model = is_5_5 or is_pro
 
-        sequential_param = "auto" if enable_group_generation and not is_pro else "disabled"
+        sequential_param = (
+            "auto"
+            if enable_group_generation and not is_single_image_model
+            else "disabled"
+        )
         n_input_images, image_param = _prepare_multi_image_inputs(images, **kwargs)
 
-        if is_pro and n_input_images > 10:
+        if is_single_image_model and n_input_images > 10:
             raise JimengException(get_text("err_img_limit_10"))
         if is_pro and n_input_images and not thinking:
             raise JimengException(get_text("err_seedream5_pro_thinking_required"))
+        if is_5_5 and layer_decomposition and n_input_images != 1:
+            raise JimengException(get_text("err_seedream55_layer_single_image"))
 
         if sequential_param == "auto":
             total_count = n_input_images + max_images
@@ -597,7 +679,11 @@ class JimengSeedream5(comfy_io.ComfyNode):
                     )
                 )
 
-        if is_pro:
+        if is_5_5:
+            size_str = prepare_seedream5_5_size(size, width, height)
+            if layer_decomposition and size_str not in ("1K", "1.5K", "2K", "auto"):
+                raise JimengException(get_text("err_seedream55_layer_size"))
+        elif is_pro:
             prompt, size_str = prepare_seedream5_pro_size(prompt, size, width, height)
         elif size == "Custom":
             min_pixels = MIN_IMAGE_PIXELS_V5
@@ -618,8 +704,8 @@ class JimengSeedream5(comfy_io.ComfyNode):
         client.check_quota(
             model_id,
             generation_count * max_images
-            if enable_group_generation and not is_pro
-            else generation_count,
+            if enable_group_generation and not is_single_image_model
+            else generation_count * (layer_max_images if is_5_5 and layer_decomposition else 1),
         )
 
         if generation_count > 1:
@@ -634,7 +720,7 @@ class JimengSeedream5(comfy_io.ComfyNode):
         async def _generate_single(idx, session):
             current_seed = random.randint(0, MAX_SEED) if seed == -1 else seed + idx
 
-            if is_pro:
+            if is_single_image_model:
                 request_kwargs = {
                     "model": model_id,
                     "prompt": prompt,
@@ -642,10 +728,25 @@ class JimengSeedream5(comfy_io.ComfyNode):
                     "response_format": "url",
                     "watermark": watermark,
                     "seed": current_seed,
-                    "optimize_prompt_options": OptimizePromptOptions(
-                        thinking="enabled" if thinking else "disabled"
-                    ),
                 }
+                if is_5_5:
+                    request_kwargs["output_format"] = "png"
+                    if background != "auto":
+                        request_kwargs["background"] = background
+                    if layer_decomposition:
+                        request_kwargs["layer_decomposition"] = True
+                        request_kwargs["layer_decomposition_options"] = {
+                            "max_images": layer_max_images,
+                            "text_recognition": text_recognition,
+                        }
+                    if thinking:
+                        request_kwargs["optimize_prompt_options"] = OptimizePromptOptions(
+                            mode="standard"
+                        )
+                else:
+                    request_kwargs["optimize_prompt_options"] = OptimizePromptOptions(
+                        thinking="enabled" if thinking else "disabled"
+                    )
                 if image_param:
                     request_kwargs["image"] = image_param
 
@@ -680,6 +781,30 @@ class JimengSeedream5(comfy_io.ComfyNode):
                         "created": getattr(response, "created", None),
                         "urls": urls,
                     }
+                    if is_5_5:
+                        response_data = getattr(response, "data", None) or []
+                        metadata["images"] = [
+                            _json_safe_metadata(
+                                {
+                                    "url": getattr(item, "url", None),
+                                    "size": getattr(item, "size", None),
+                                    "output_format": getattr(
+                                        item, "output_format", None
+                                    ),
+                                    "background": getattr(item, "background", None),
+                                    "z_index": getattr(item, "z_index", None),
+                                    "name": getattr(item, "name", None),
+                                    "description": getattr(item, "description", None),
+                                    "bounding_box": getattr(
+                                        item, "bounding_box", None
+                                    ),
+                                    "text_recognition": getattr(
+                                        item, "text_recognition", None
+                                    ),
+                                }
+                            )
+                            for item in response_data
+                        ]
                     return safe_cat_tensors(downloaded), metadata
                 except comfy.model_management.InterruptProcessingException:
                     raise

@@ -10,8 +10,10 @@ SEEDREAM_4_MODEL_MAP = {
 SEEDREAM_5_MODEL_MAP = {
     "doubao-seedream-5.0-pro": "doubao-seedream-5-0-pro-260628",
     "doubao-seedream-5.0-lite": "doubao-seedream-5-0-260128",
+    "doubao-seedream-5.5": "doubao-seedream-5-5-261028",
 }
 
+SEEDREAM_5_5_UI_MODEL = "doubao-seedream-5.5"
 SEEDREAM_5_PRO_UI_MODEL = "doubao-seedream-5.0-pro"
 SEEDREAM_5_LITE_UI_MODEL = "doubao-seedream-5.0-lite"
 
@@ -30,6 +32,7 @@ VIDEO_MODEL_MAP = {
     "doubao-seedance-2-0-fast": "doubao-seedance-2-0-fast-260128",
     "doubao-seedance-2-0-mini": "doubao-seedance-2-0-mini-260615",
     "doubao-seedance-2-5": "doubao-seedance-2-5-260628",
+    "doubao-seedance-2-5-flash": "doubao-seedance-2-5-flash-261115",
     # Lite 模型
     "doubao-seedance-1-0-lite-t2v": "doubao-seedance-1-0-lite-t2v-250428",
     "doubao-seedance-1-0-lite-i2v": "doubao-seedance-1-0-lite-i2v-250428",
@@ -53,6 +56,7 @@ VIDEO_2_UI_OPTIONS = [
     "doubao-seedance-2-0-fast",
     "doubao-seedance-2-0-mini",
     "doubao-seedance-2-5",
+    "doubao-seedance-2-5-flash",
 ]
 
 VIDEO_2_MODEL_RESOLUTIONS = {
@@ -60,6 +64,7 @@ VIDEO_2_MODEL_RESOLUTIONS = {
     "doubao-seedance-2-0-fast": ["480p", "720p"],
     "doubao-seedance-2-0-mini": ["480p", "720p"],
     "doubao-seedance-2-5": ["480p", "720p"],
+    "doubao-seedance-2-5-flash": ["480p", "720p"],
 }
 
 VIDEO_2_MODEL_MAX_DURATIONS = {
@@ -67,6 +72,7 @@ VIDEO_2_MODEL_MAX_DURATIONS = {
     "doubao-seedance-2-0-fast": 15,
     "doubao-seedance-2-0-mini": 15,
     "doubao-seedance-2-5": 30,
+    "doubao-seedance-2-5-flash": 30,
 }
 
 VIDEO_2_MODEL_REFERENCE_LIMITS = {
@@ -74,7 +80,11 @@ VIDEO_2_MODEL_REFERENCE_LIMITS = {
     "doubao-seedance-2-0-fast": {"images": 9, "videos": 3, "audios": 3},
     "doubao-seedance-2-0-mini": {"images": 9, "videos": 3, "audios": 3},
     "doubao-seedance-2-5": {"images": 30, "videos": 10, "audios": 10},
+    "doubao-seedance-2-5-flash": {"images": 10, "videos": 5, "audios": 5},
 }
+
+# 共享 Seedance 2.5 系列规则的 UI 模型（编辑参数、纯音频参考、参考素材时长）
+SEEDANCE_2_5_UI_MODELS = {"doubao-seedance-2-5", "doubao-seedance-2-5-flash"}
 
 # 任务查询节点专用的模型列表
 QUERY_TASKS_MODEL_LIST = ["all"] + VIDEO_1_UI_OPTIONS + VIDEO_1_5_UI_OPTIONS + VIDEO_2_UI_OPTIONS

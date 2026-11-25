@@ -148,7 +148,7 @@
   },
   "JimengSeedream5": {
     "display_name": "图像生成（Seedream 5）",
-    "description": "使用 Seedream 5 Pro 或 Lite 生成图像；Pro 支持提示词优化，Lite 支持组图与联网搜索。",
+    "description": "使用 Seedream 5.5、5 Pro 或 Lite 生成图像；5.5 支持 1K/1.5K/2K、透明背景与图层拆分，Pro 支持提示词优化，Lite 支持组图与联网搜索。",
     "inputs": {
       "client": {
         "name": "客户端",
@@ -191,6 +191,22 @@
       },
       "model_version_watermark": {
         "name": "水印"
+      },
+      "model_version_background": {
+        "name": "背景",
+        "tooltip": "Seedream 5.5 支持 auto、transparent（透明 RGBA）与 opaque。"
+      },
+      "model_version_layer_decomposition": {
+        "name": "图层拆分",
+        "tooltip": "开启后将单张参考图拆为底图与透明图层；仅 Seedream 5.5 支持。"
+      },
+      "model_version_layer_max_images": {
+        "name": "最大图层数",
+        "tooltip": "包含底图在内的最大输出张数，范围 2–100；仅图层拆分开启时生效。"
+      },
+      "model_version_text_recognition": {
+        "name": "文字识别",
+        "tooltip": "图层拆分时返回富文本 OCR 结果；仅 Seedream 5.5 支持。"
       },
       "prompt": {
         "name": "提示词",
@@ -239,9 +255,25 @@
         "name": "水印",
         "tooltip": "是否在生成的图像上添加水印。"
       },
+      "background": {
+        "name": "背景",
+        "tooltip": "Seedream 5.5 支持 auto、transparent（透明 RGBA）与 opaque。"
+      },
+      "layer_decomposition": {
+        "name": "图层拆分",
+        "tooltip": "开启后将单张参考图拆为底图与透明图层；仅 Seedream 5.5 支持。"
+      },
+      "layer_max_images": {
+        "name": "最大图层数",
+        "tooltip": "包含底图在内的最大输出张数，范围 2–100；仅图层拆分开启时生效。"
+      },
+      "text_recognition": {
+        "name": "文字识别",
+        "tooltip": "图层拆分时返回富文本 OCR 结果；仅 Seedream 5.5 支持。"
+      },
       "images": {
         "name": "图像 1",
-        "tooltip": "用于图生图的参考图像。Seedream 5 Pro 最多接收 10 张。"
+        "tooltip": "用于图生图的参考图像。Seedream 5.5 与 5 Pro 最多接收 10 张。"
       }
     },
     "outputs": {
@@ -445,7 +477,7 @@
   },
   "JimengSeedance2": {
     "display_name": "视频生成（Seedance 2 / 2.5）",
-    "description": "使用 Seedance 2.0、Fast、Mini 或 2.5 生成和编辑视频；2.5 支持最长 30 秒及更多参考素材。",
+    "description": "使用 Seedance 2.0、Fast、Mini、2.5 或 2.5 Flash 生成和编辑视频；2.5 系列支持最长 30 秒。",
     "inputs": {
       "client": {
         "name": "客户端",
@@ -453,7 +485,7 @@
       },
       "model_version": {
         "name": "模型版本",
-        "tooltip": "选择要使用的 Seedance 2.0 或 2.5 模型版本。"
+        "tooltip": "选择要使用的 Seedance 2.0、2.5 或 2.5 Flash 模型版本。"
       },
       "model_version_prompt": {
         "name": "提示词"
@@ -466,7 +498,7 @@
       },
       "model_version_resolution": {
         "name": "分辨率",
-        "tooltip": "Seedance 2.5 支持 480p、720p；Seedance 2.0 标准版最高支持 4K。"
+        "tooltip": "Seedance 2.5 / 2.5 Flash 支持 480p、720p；Seedance 2.0 标准版最高支持 4K。"
       },
       "model_version_aspect_ratio": {
         "name": "宽高比"
@@ -476,7 +508,7 @@
       },
       "model_version_duration": {
         "name": "时长 (秒)",
-        "tooltip": "Seedance 2.5 支持 4–30 秒；Seedance 2.0 系列支持 4–15 秒。"
+        "tooltip": "Seedance 2.5 系列支持 4–30 秒；Seedance 2.0 系列支持 4–15 秒。"
       },
       "model_version_generate_audio": {
         "name": "生成音频"
@@ -558,7 +590,7 @@
       },
       "ref_image_1": {
         "name": "参考图像 1",
-        "tooltip": "用于多模态参考的图像。Seedance 2.5 最多支持 30 张，Seedance 2.0 系列最多支持 9 张。"
+        "tooltip": "用于多模态参考的图像。Seedance 2.5 最多支持 30 张，2.5 Flash 最多 10 张，Seedance 2.0 系列最多支持 9 张。"
       },
       "ref_image_2": {
         "name": "参考图像 2",
@@ -594,7 +626,7 @@
       },
       "ref_video_1": {
         "name": "参考视频 1",
-        "tooltip": "用于多模态参考的视频。Seedance 2.5 最多支持 10 个，Seedance 2.0 系列最多支持 3 个。"
+        "tooltip": "用于多模态参考的视频。Seedance 2.5 最多支持 10 个，2.5 Flash 最多 5 个，Seedance 2.0 系列最多支持 3 个。"
       },
       "ref_video_2": {
         "name": "参考视频 2",
@@ -606,7 +638,7 @@
       },
       "ref_audio_1": {
         "name": "参考音频 1",
-        "tooltip": "用于多模态参考的音频。Seedance 2.5 最多支持 10 个并允许纯音频参考；Seedance 2.0 系列最多支持 3 个且需搭配图片或视频。"
+        "tooltip": "用于多模态参考的音频。Seedance 2.5 最多支持 10 个，2.5 Flash 最多 5 个，均允许纯音频参考；Seedance 2.0 系列最多支持 3 个且需搭配图片或视频。"
       },
       "ref_audio_2": {
         "name": "参考音频 2",

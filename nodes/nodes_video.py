@@ -75,6 +75,7 @@ from .models_config import (
     VIDEO_2_MODEL_RESOLUTIONS,
     VIDEO_2_MODEL_MAX_DURATIONS,
     VIDEO_2_MODEL_REFERENCE_LIMITS,
+    SEEDANCE_2_5_UI_MODELS,
 )
 
 logging.getLogger("volcenginesdkarkruntime").setLevel(logging.ERROR)
@@ -1397,8 +1398,9 @@ class JimengSeedance2(JimengVideoBase, comfy_io.ComfyNode):
             display_name="Jimeng Seedance 2 / 2.5",
             category=GLOBAL_CATEGORY,
             description=(
-                "Generate or edit video with Seedance 2.0, Fast, Mini, or 2.5. "
-                "Seedance 2.5 supports up to 30-second output and more references."
+                "Generate or edit video with Seedance 2.0, Fast, Mini, 2.5, or 2.5 Flash. "
+                "Seedance 2.5 supports up to 30-second output and more references; "
+                "2.5 Flash supports 480p/720p with up to 10 images, 5 videos, and 5 audios."
             ),
             is_output_node=True,
             is_experimental=True,
@@ -1509,7 +1511,7 @@ class JimengSeedance2(JimengVideoBase, comfy_io.ComfyNode):
         validate_seedance2_reference_counts(
             model_version, ref_images, ref_videos, ref_audios
         )
-        is_seedance_2_5 = model_version == "doubao-seedance-2-5"
+        is_seedance_2_5 = model_version in SEEDANCE_2_5_UI_MODELS
         if is_seedance_2_5 and ref_videos and (
             aspect_ratio != "adaptive" or not auto_duration
         ):

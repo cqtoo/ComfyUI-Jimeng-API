@@ -46,6 +46,14 @@ class ModelConfigurationTests(unittest.TestCase):
             "doubao-seedance-2-5-260628",
         )
         self.assertEqual(
+            models_config.SEEDREAM_5_MODEL_MAP["doubao-seedream-5.5"],
+            "doubao-seedream-5-5-261028",
+        )
+        self.assertEqual(
+            models_config.VIDEO_MODEL_MAP["doubao-seedance-2-5-flash"],
+            "doubao-seedance-2-5-flash-261115",
+        )
+        self.assertEqual(
             next(iter(models_config.VISUAL_MODEL_MAP.items())),
             ("doubao-seed-2-1-pro", "doubao-seed-2-1-pro-260628"),
         )
@@ -74,6 +82,20 @@ class ModelConfigurationTests(unittest.TestCase):
         )
         with self.assertRaises(Exception):
             nodes_video.validate_seedance2_resolution("doubao-seedance-2-5", "1080p")
+        self.assertEqual(
+            models_config.VIDEO_2_MODEL_RESOLUTIONS["doubao-seedance-2-5-flash"],
+            ["480p", "720p"],
+        )
+        self.assertEqual(
+            nodes_video.validate_seedance2_resolution(
+                "doubao-seedance-2-5-flash", "720p"
+            ),
+            "720p",
+        )
+        with self.assertRaises(Exception):
+            nodes_video.validate_seedance2_resolution(
+                "doubao-seedance-2-5-flash", "1080p"
+            )
 
     def test_seedance25_duration_and_reference_limits(self):
         self.assertEqual(
@@ -105,6 +127,28 @@ class ModelConfigurationTests(unittest.TestCase):
                 "doubao-seedance-2-0", [object()] * 10, [], []
             )
 
+        flash_limits = nodes_video.validate_seedance2_reference_counts(
+            "doubao-seedance-2-5-flash",
+            [object()] * 10,
+            [object()] * 5,
+            [object()] * 5,
+        )
+        self.assertEqual(flash_limits, {"images": 10, "videos": 5, "audios": 5})
+        self.assertEqual(
+            nodes_video.validate_seedance2_duration(
+                "doubao-seedance-2-5-flash", 30
+            ),
+            30,
+        )
+        with self.assertRaises(Exception):
+            nodes_video.validate_seedance2_duration(
+                "doubao-seedance-2-5-flash", 31
+            )
+        with self.assertRaises(Exception):
+            nodes_video.validate_seedance2_reference_counts(
+                "doubao-seedance-2-5-flash", [object()] * 11, [], []
+            )
+
     def test_dynamic_combo_schema_and_nested_order(self):
         image_combo = nodes_image.JimengSeedream5.define_schema().inputs[1]
         video_combo = nodes_video.JimengSeedance2.define_schema().inputs[1]
@@ -122,6 +166,43 @@ class ModelConfigurationTests(unittest.TestCase):
             item for item in seedance25.inputs if item.id == "duration"
         )
         self.assertEqual(duration_input.max, 30)
+
+        flash = next(
+            option
+            for option in video_combo.options
+            if option.key == "doubao-seedance-2-5-flash"
+        )
+        self.assertEqual(
+            next(item for item in flash.inputs if item.id == "duration").max, 30
+        )
+        self.assertEqual(
+            next(item for item in flash.inputs if item.id == "resolution").options,
+            ["480p", "720p"],
+        )
+
+        seedream55 = next(
+            option
+            for option in image_combo.options
+            if option.key == "doubao-seedream-5.5"
+        )
+        self.assertEqual(
+            next(item for item in seedream55.inputs if item.id == "size").options[0],
+            "1K (adaptive)",
+        )
+        self.assertEqual(
+            next(item for item in seedream55.inputs if item.id == "size").options[1:3],
+            ["1.5K (adaptive)", "2K (adaptive)"],
+        )
+        self.assertEqual(
+            [item.id for item in seedream55.inputs][-5:],
+            [
+                "background",
+                "layer_decomposition",
+                "layer_max_images",
+                "text_recognition",
+                "watermark",
+            ],
+        )
 
         video_schema = nodes_video.JimengSeedance2.define_schema()
         dynamic_inputs = {item.id: item for item in video_schema.inputs[2:5]}
@@ -615,6 +696,114 @@ class Seedream5ProTests(unittest.IsolatedAsyncioTestCase):
                 nodes_image.JimengSeedream5.hidden = old_hidden
 
 
+class Seedream55Tests(unittest.IsolatedAsyncioTestCase):
+    def test_size_tiers_and_custom_range(self):
+        self.assertEqual(
+            nodes_image.prepare_seedream5_5_size("1.5K (adaptive)", 2048, 2048)[1],
+            "1.5K",
+        )
+        self.assertEqual(
+            nodes_image.prepare_seedream5_5_size("2048x2048 (1:1)", 2048, 2048)[1],
+            "2048x2048",
+        )
+        self.assertEqual(
+            nodes_image.prepare_seedream5_5_size("Custom", 1280, 720)[1],
+            "1280x720",
+        )
+        with self.assertRaises(Exception):
+            nodes_image.prepare_seedream5_5_size("Custom", 512, 512)
+        with self.assertRaises(Exception):
+            nodes_image.prepare_seedream5_5_size("Custom", 4112, 256)
+
+    async def test_layer_decomposition_request_and_metadata(self):
+        calls = []
+
+        class Images:
+            @staticmethod
+            def generate(**kwargs):
+                calls.append(kwargs)
+                return SimpleNamespace(
+                    model=kwargs["model"],
+                    created=1,
+                    data=[
+                        SimpleNamespace(
+                            url="https://example.invalid/base.png",
+                            z_index=0,
+                            name="base",
+                        ),
+                        SimpleNamespace(
+                            url="https://example.invalid/layer.png",
+                            z_index=1,
+                            text_recognition={"text": "hi"},
+                        ),
+                    ],
+                )
+
+        class Client:
+            ark = SimpleNamespace(images=Images())
+
+            @staticmethod
+            def check_quota(*_args):
+                return None
+
+            @staticmethod
+            def update_usage(*_args):
+                return None
+
+        async def fake_download(_session, _url):
+            import torch
+
+            return torch.zeros((1, 2, 2, 3))
+
+        old_download = nodes_image.download_url_to_image_tensor_async
+        old_count = nodes_image.get_node_count_in_workflow
+        old_hidden = getattr(nodes_image.JimengSeedream5, "hidden", None)
+        nodes_image.download_url_to_image_tensor_async = fake_download
+        nodes_image.get_node_count_in_workflow = lambda *_args, **_kwargs: 1
+        nodes_image.JimengSeedream5.hidden = SimpleNamespace(
+            unique_id="test-node", prompt={}
+        )
+        try:
+            result = await nodes_image.JimengSeedream5.execute(
+                Client(),
+                {
+                    "model_version": "doubao-seedream-5.5",
+                    "prompt": "product photo",
+                    "size": "2K (adaptive)",
+                    "width": 2048,
+                    "height": 2048,
+                    "seed": 7,
+                    "generation_count": 1,
+                    "watermark": True,
+                    "background": "transparent",
+                    "layer_decomposition": True,
+                    "layer_max_images": 5,
+                    "text_recognition": True,
+                },
+                images=__import__("torch").zeros((1, 8, 8, 3)),
+            )
+        finally:
+            nodes_image.download_url_to_image_tensor_async = old_download
+            nodes_image.get_node_count_in_workflow = old_count
+            if old_hidden is None:
+                delattr(nodes_image.JimengSeedream5, "hidden")
+            else:
+                nodes_image.JimengSeedream5.hidden = old_hidden
+
+        request = calls[0]
+        self.assertEqual(request["model"], "doubao-seedream-5-5-261028")
+        self.assertEqual(request["output_format"], "png")
+        self.assertEqual(request["background"], "transparent")
+        self.assertTrue(request["layer_decomposition"])
+        self.assertEqual(
+            request["layer_decomposition_options"],
+            {"max_images": 5, "text_recognition": True},
+        )
+        self.assertEqual(request["optimize_prompt_options"].mode, "standard")
+        self.assertNotIn("sequential_image_generation", request)
+        self.assertTrue(result is not None)
+
+
 class Seedance25ExecutionTests(unittest.IsolatedAsyncioTestCase):
     async def test_seedance25_audio_only_uses_official_model(self):
         captured = {}
@@ -671,6 +860,58 @@ class Seedance25ExecutionTests(unittest.IsolatedAsyncioTestCase):
             captured["kwargs"]["model_name"], "doubao-seedance-2-5-260628"
         )
         self.assertEqual(captured["kwargs"]["extra_api_params"]["generate_audio"], True)
+
+    async def test_seedance25_flash_audio_only_uses_official_model(self):
+        captured = {}
+
+        async def fake_common(_self, *args, **kwargs):
+            captured["kwargs"] = kwargs
+            return "ok"
+
+        def fake_append_audio(_self, content, _audio, role, max_duration):
+            content.append(
+                {
+                    "type": "audio_url",
+                    "audio_url": {"url": "data:audio/wav;base64,AA=="},
+                    "role": role,
+                }
+            )
+            self.assertEqual(max_duration, 30.2)
+            return 5.0, 4
+
+        old_common = nodes_video.JimengVideoBase._common_generation_logic
+        old_append_audio = nodes_video.JimengVideoBase._append_audio_content
+        old_hidden = getattr(nodes_video.JimengSeedance2, "hidden", None)
+        nodes_video.JimengVideoBase._common_generation_logic = fake_common
+        nodes_video.JimengVideoBase._append_audio_content = fake_append_audio
+        nodes_video.JimengSeedance2.hidden = SimpleNamespace(
+            unique_id="seedance25-flash-test", prompt={}
+        )
+        try:
+            result = await nodes_video.JimengSeedance2.execute(
+                SimpleNamespace(),
+                {
+                    "model_version": "doubao-seedance-2-5-flash",
+                    "prompt": "",
+                    "duration": 30,
+                    "auto_duration": False,
+                    "resolution": "480p",
+                    "aspect_ratio": "adaptive",
+                },
+                ref_audios=[object()],
+            )
+        finally:
+            nodes_video.JimengVideoBase._common_generation_logic = old_common
+            nodes_video.JimengVideoBase._append_audio_content = old_append_audio
+            if old_hidden is None:
+                delattr(nodes_video.JimengSeedance2, "hidden")
+            else:
+                nodes_video.JimengSeedance2.hidden = old_hidden
+
+        self.assertEqual(result, "ok")
+        self.assertEqual(
+            captured["kwargs"]["model_name"], "doubao-seedance-2-5-flash-261115"
+        )
 
     async def test_seedance25_video_editing_requires_adaptive_auto_duration(self):
         old_hidden = getattr(nodes_video.JimengSeedance2, "hidden", None)
