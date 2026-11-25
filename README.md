@@ -2,11 +2,14 @@
   <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/1.74.0/files/dark/jimeng-color.png" width="120" />
 </div>
 
+## 2026年11月25日
+- 新增Seedance2.5 Flash模型，参数与官方一致
+- 新增Seedream5.5 生图模型，参数与官方一致
 # ComfyUI 即梦 API 节点
 
 本项目为 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 提供了火山方舟的视觉模型（即梦/豆包） API 节点。用户可以通过这些节点在 ComfyUI 中使用多种图像生成和视频生成功能。
 
-- 项目已支持 `Seedance 2.0`、`Seedance 2.0 Fast`、`Seedance 2.0 Mini` 与 `Seedance 2.5`；2.0 标准版最高支持 4K，2.5 最长支持 30 秒。
+- 项目已支持 `Seedance 2.0`、`Seedance 2.0 Fast`、`Seedance 2.0 Mini` 与 `Seedance 2.5` 、`Seedance2.5 Flash🌟`；2.0 标准版最高支持 4K，2.5 最长支持 30 秒。
 - 如在使用过程中遇到问题，请通过 [ISSUES](https://github.com/fkxianzhou/ComfyUI-Jimeng-API/issues) 反馈。
 - Classic Canvas 与 Nodes 2.0（Vue）均受支持，最低支持 ComfyUI `0.25.1`。
 
