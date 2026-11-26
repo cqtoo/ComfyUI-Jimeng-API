@@ -2,6 +2,9 @@
   <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/1.74.0/files/dark/jimeng-color.png" width="120" />
 </div>
 
+## 2026年11月26日
+- 新增 MAGI-2 视频生成节点，移植星朗3.5 Java 渠道协议与素材处理方式。
+
 ## 2026年11月25日
 - 新增Seedance2.5 Flash模型，参数与官方一致
 - 新增Seedream5.5 生图模型，参数与官方一致
@@ -10,6 +13,7 @@
 本项目为 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 提供了火山方舟的视觉模型（即梦/豆包） API 节点。用户可以通过这些节点在 ComfyUI 中使用多种图像生成和视频生成功能。
 
 - 项目已支持 `Seedance 2.0`、`Seedance 2.0 Fast`、`Seedance 2.0 Mini` 与 `Seedance 2.5` 、`Seedance2.5 Flash🌟`；2.0 标准版最高支持 4K，2.5 最长支持 30 秒。
+- 项目同时支持独立渠道模型 `MAGI-2`，从 Java 星朗3.5 渠道实现提取，支持公网素材直链与已加白素材 ID。
 - 如在使用过程中遇到问题，请通过 [ISSUES](https://github.com/fkxianzhou/ComfyUI-Jimeng-API/issues) 反馈。
 - Classic Canvas 与 Nodes 2.0（Vue）均受支持，最低支持 ComfyUI `0.25.1`。
 
@@ -52,6 +56,7 @@ git clone https://github.com/fkxianzhou/ComfyUI-Jimeng-API
 
 - **基础设置**:
   - `火山方舟 API 客户端`: **(必须)** 用于加载并创建一个可供其他节点使用的客户端实例。
+  - `MAGI-2 API 客户端`: MAGI-2 独立渠道客户端，填写渠道分配的 API Key 与接口地址，不使用火山方舟密钥。
   - `Jimeng 配额设置`: 用于设置图像和视频生成的配额限制，防止意外消耗过多资源。
 - **图像生成**:
   - `图像生成（Seedream 3）`: 基础图像生成节点。
@@ -61,6 +66,7 @@ git clone https://github.com/fkxianzhou/ComfyUI-Jimeng-API
   - `视频生成（Seedance 1.0）`: 核心视频生成节点，支持文生视频、图生视频（首/尾帧）。
   - `视频生成（Seedance 1.5 Pro）`: 支持**音频生成**和**智能时长**的高级视频生成节点。
   - `视频生成（Seedance 2 / 2.5）`: 支持**图片/视频/音频多模态参考**、**视频编辑/延长**与**联网搜索增强**，覆盖 2.5 Flash。
+  - `视频生成（MAGI-2）`: 移植 Java 星朗3.5 渠道，支持公网直链素材或已上传加白素材 ID。
   - `视频生成（参考图生视频）`: 根据 1-4 张**参考图像**生成视频。
   - `视频生成任务列表查询`: 用于查询和管理在 API 上运行的任务历史。
 - **视觉理解**:
@@ -138,6 +144,31 @@ git clone https://github.com/fkxianzhou/ComfyUI-Jimeng-API
 **示例工作流**（点击预览图打开 JSON）：
 
 [![Seedance 2 Workflow](./example_workflows/Seedance%202.jpg)](./example_workflows/Seedance%202.json)
+
+***
+
+### `视频生成（MAGI-2）`
+
+该节点从 `D:\Projects\ai-video` 的业务渠道“星朗3.5” Java 实现中提取协议，并改名为 **MAGI-2** 模型。它使用独立的 MAGI-2 API Key 与渠道 endpoint，不依赖火山方舟客户端或配额节点。
+
+- **提交方式**: `POST {endpoint}/v2/generations`，每个任务只提交一次，不使用幂等键，也不在提交失败时自动重试；与 Java 实现一致。
+- **查询方式**: `GET {endpoint}/v2/generations/{id}`，按可配置间隔轮询；查询接口异常不进入终态，下一轮继续查询。
+- **鉴权**: `Authorization: Bearer <API Key>`；API Key 可带或不带 `Bearer` 前缀。
+- **请求参数**: `model=magi-2`、`parts`、`duration`、`aspectRatio`、`resolution`。
+  - `duration`: 4–30 秒，非法值回退为 5 秒。
+  - `aspectRatio`: `21:9`、`16:9`、`4:3`、`1:1`、`3:4`、`9:16`，非法值回退为 `16:9`。
+  - `resolution`: 固定 `1080p`。
+  - `parts`: 第一段为文本提示词，后续按图片、视频、音频顺序追加引用素材；提示词按 `@图片1`、`@视频1`、`@音频1` 对应素材序号。
+- **素材处理方式**:
+  - `public_url`（默认）: 直接把无需鉴权的公网 HTTP(S) 素材直链写入 `url` 字段，对应 Java `SandMediaRef.url`，**无需预先上传或加白审核**。
+  - `asset_id`: 写入 `assetId` 字段，对应 Java `SandMediaRef.assetId`；该模式要求素材**已在渠道侧预先上传/加白审核通过**，并提供数字素材 ID。Java 项目仅在 DTO 中预留 `assetId`，未实现 `/v1/assets` 上传接口，本插件同样不代做上传/审核，只接收已获得的 ID。
+- **响应处理**: `queued/pending` 映射为排队，`processing/running` 映射为处理中，`failed/canceled` 为失败，`succeeded` 为成功；成功但尚无 `videoUrl` 时继续轮询。
+- **输出**: 首个视频、最后一帧（提取失败时为白图）和包含任务 ID、视频 URL、URL 有效期的 JSON。
+
+### `MAGI-2 API 客户端`
+
+- **输入**: `api_key`（MAGI-2 渠道 API Key）和 `base_url`（渠道 endpoint）。`base_url` 默认值为 `https://api.sand.ai`，可按需修改。
+- **输出**: 供 `视频生成（MAGI-2）` 使用的客户端实例。
 
 ***
 

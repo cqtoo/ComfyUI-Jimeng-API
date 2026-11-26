@@ -174,6 +174,7 @@ if _dependencies_ready:
     from .nodes.nodes_video import JimengSeedance1, JimengSeedance1_5, JimengSeedance2, JimengReferenceImage2Video, JimengVideoQueryTasks, JimengProgressTest
     from .nodes.nodes_visual import JimengVisualUnderstanding
     from .nodes.quota import JimengQuotaSettings
+    from .nodes.nodes_magi import MagiAPIClient, MagiVideoGenerate
 
     _registered_nodes = [
         JimengAPIClient,
@@ -188,6 +189,8 @@ if _dependencies_ready:
         JimengProgressTest,
         JimengVisualUnderstanding,
         JimengQuotaSettings,
+        MagiAPIClient,
+        MagiVideoGenerate,
     ]
 else:
     _registered_nodes = []

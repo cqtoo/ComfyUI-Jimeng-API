@@ -903,5 +903,101 @@
         "tooltip": "包含完整元数据的 JSON 响应。"
       }
     }
+  },
+  "MagiAPIClient": {
+    "display_name": "MAGI-2 API 客户端",
+    "description": "为 MAGI-2 视频渠道创建客户端，直接使用渠道分配的 API Key 与接口地址，不依赖火山方舟客户端。",
+    "inputs": {
+      "api_key": {
+        "name": "API Key",
+        "tooltip": "MAGI-2 API Key，可带或可不带 Bearer 前缀。"
+      },
+      "base_url": {
+        "name": "接口地址",
+        "tooltip": "渠道接口根地址，默认 https://api.sand.ai，可按需修改；对应 Java 服务 video_provider_config.endpoint。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "客户端",
+        "tooltip": "MAGI-2 客户端实例。"
+      }
+    }
+  },
+  "MagiVideoGenerate": {
+    "display_name": "视频生成（MAGI-2）",
+    "description": "按 Java 星朗3.5 渠道协议调用 MAGI-2：POST /v2/generations 提交一次任务，再轮询 GET /v2/generations/{id}。素材支持公网直链或已上传加白的 assetId。",
+    "inputs": {
+      "client": {
+        "name": "客户端",
+        "tooltip": "MAGI-2 API 客户端。"
+      },
+      "model": {
+        "name": "模型",
+        "tooltip": "固定为 magi-2。"
+      },
+      "prompt": {
+        "name": "提示词",
+        "tooltip": "按素材填写顺序引用：@图片1、@视频1、@音频1。"
+      },
+      "material_mode": {
+        "name": "素材模式",
+        "tooltip": "public_url：直接提交无需鉴权的公网 HTTP(S) 直链；asset_id：提交已在渠道侧上传并加白审核通过的数字 assetId。"
+      },
+      "ref_images": {
+        "name": "参考图片",
+        "tooltip": "图片公网直链或数字 assetId，按提示词中的 @图片N 顺序填写。"
+      },
+      "ref_videos": {
+        "name": "参考视频",
+        "tooltip": "视频公网直链或数字 assetId，按提示词中的 @视频N 顺序填写。"
+      },
+      "ref_audios": {
+        "name": "参考音频",
+        "tooltip": "音频公网直链或数字 assetId，按提示词中的 @音频N 顺序填写。"
+      },
+      "duration": {
+        "name": "时长 (秒)",
+        "tooltip": "4–30 秒，默认 5 秒；非法值会按 Java 逻辑回退为 5 秒。"
+      },
+      "aspect_ratio": {
+        "name": "宽高比",
+        "tooltip": "可选 21:9、16:9、4:3、1:1、3:4、9:16；非法值回退为 16:9。"
+      },
+      "resolution": {
+        "name": "分辨率",
+        "tooltip": "Java 渠道固定设置 1080p。"
+      },
+      "generation_count": {
+        "name": "生成数量",
+        "tooltip": "提交的任务数，每个任务只创建一次，不自动重试。"
+      },
+      "poll_interval": {
+        "name": "轮询间隔 (秒)",
+        "tooltip": "任务查询间隔，默认 10 秒。"
+      },
+      "timeout": {
+        "name": "超时 (秒)",
+        "tooltip": "等待任务完成的最大时长，默认 900 秒。"
+      },
+      "filename_prefix": {
+        "name": "文件名前缀",
+        "tooltip": "批量生成时额外视频保存到 ComfyUI 输出目录的前缀。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "视频",
+        "tooltip": "生成视频。"
+      },
+      "1": {
+        "name": "末帧",
+        "tooltip": "生成视频的最后一帧；提取失败时返回白图。"
+      },
+      "2": {
+        "name": "响应",
+        "tooltip": "包含任务 ID、状态、视频 URL 与有效期的 JSON。"
+      }
+    }
   }
 }
