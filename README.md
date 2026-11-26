@@ -3,7 +3,7 @@
 </div>
 
 ## 2026年11月26日
-- 新增 MAGI-2 视频生成节点，移植星朗3.5 Java 渠道协议与素材处理方式。
+- 新增 MAGI-2 视频生成节点。渠道协议与素材处理方式与官方一致。
 
 ## 2026年11月25日
 - 新增Seedance2.5 Flash模型，参数与官方一致
@@ -13,7 +13,7 @@
 本项目为 [ComfyUI](https://github.com/comfyanonymous/ComfyUI) 提供了火山方舟的视觉模型（即梦/豆包） API 节点。用户可以通过这些节点在 ComfyUI 中使用多种图像生成和视频生成功能。
 
 - 项目已支持 `Seedance 2.0`、`Seedance 2.0 Fast`、`Seedance 2.0 Mini` 与 `Seedance 2.5` 、`Seedance2.5 Flash🌟`；2.0 标准版最高支持 4K，2.5 最长支持 30 秒。
-- 项目同时支持独立渠道模型 `MAGI-2`，从 Java 星朗3.5 渠道实现提取，支持公网素材直链与已加白素材 ID。
+- 项目同时支持独立渠道模型 `MAGI-2`，支持公网素材直链。
 - 如在使用过程中遇到问题，请通过 [ISSUES](https://github.com/fkxianzhou/ComfyUI-Jimeng-API/issues) 反馈。
 - Classic Canvas 与 Nodes 2.0（Vue）均受支持，最低支持 ComfyUI `0.25.1`。
 
@@ -66,7 +66,7 @@ git clone https://github.com/fkxianzhou/ComfyUI-Jimeng-API
   - `视频生成（Seedance 1.0）`: 核心视频生成节点，支持文生视频、图生视频（首/尾帧）。
   - `视频生成（Seedance 1.5 Pro）`: 支持**音频生成**和**智能时长**的高级视频生成节点。
   - `视频生成（Seedance 2 / 2.5）`: 支持**图片/视频/音频多模态参考**、**视频编辑/延长**与**联网搜索增强**，覆盖 2.5 Flash。
-  - `视频生成（MAGI-2）`: 移植 Java 星朗3.5 渠道，支持公网直链素材或已上传加白素材 ID。
+  - `视频生成（MAGI-2）`: MEGI-2渠道，支持公网直链素材。
   - `视频生成（参考图生视频）`: 根据 1-4 张**参考图像**生成视频。
   - `视频生成任务列表查询`: 用于查询和管理在 API 上运行的任务历史。
 - **视觉理解**:
@@ -149,7 +149,7 @@ git clone https://github.com/fkxianzhou/ComfyUI-Jimeng-API
 
 ### `视频生成（MAGI-2）`
 
-该节点从 `D:\Projects\ai-video` 的业务渠道“星朗3.5” Java 实现中提取协议，并改名为 **MAGI-2** 模型。它使用独立的 MAGI-2 API Key 与渠道 endpoint，不依赖火山方舟客户端或配额节点。
+**MAGI-2** 模型。它使用独立的 MAGI-2 API Key 与渠道 endpoint，不依赖火山方舟客户端或配额节点。
 
 - **提交方式**: `POST {endpoint}/v2/generations`，每个任务只提交一次，不使用幂等键，也不在提交失败时自动重试；与 Java 实现一致。
 - **查询方式**: `GET {endpoint}/v2/generations/{id}`，按可配置间隔轮询；查询接口异常不进入终态，下一轮继续查询。
