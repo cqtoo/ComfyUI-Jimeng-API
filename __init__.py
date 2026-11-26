@@ -168,13 +168,21 @@ def check_and_update_dependencies():
 
 _dependencies_ready = check_and_update_dependencies()
 
+try:
+    # MAGI-2 是独立渠道，不应受火山 SDK 安装状态影响。
+    from .nodes.nodes_magi import MagiAPIClient, MagiVideoGenerate
+
+    _magi_nodes = [MagiAPIClient, MagiVideoGenerate]
+except Exception as e:
+    print(f"[JimengAI] Failed to load MAGI-2 nodes: {e}")
+    _magi_nodes = []
+
 if _dependencies_ready:
     from .nodes.nodes_shared import JimengAPIClient
     from .nodes.nodes_image import JimengSeedream3, JimengSeedream4, JimengSeedream5
     from .nodes.nodes_video import JimengSeedance1, JimengSeedance1_5, JimengSeedance2, JimengReferenceImage2Video, JimengVideoQueryTasks, JimengProgressTest
     from .nodes.nodes_visual import JimengVisualUnderstanding
     from .nodes.quota import JimengQuotaSettings
-    from .nodes.nodes_magi import MagiAPIClient, MagiVideoGenerate
 
     _registered_nodes = [
         JimengAPIClient,
@@ -189,11 +197,9 @@ if _dependencies_ready:
         JimengProgressTest,
         JimengVisualUnderstanding,
         JimengQuotaSettings,
-        MagiAPIClient,
-        MagiVideoGenerate,
-    ]
+    ] + _magi_nodes
 else:
-    _registered_nodes = []
+    _registered_nodes = list(_magi_nodes)
 
 class JimengExtension(ComfyExtension):
     """

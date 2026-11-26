@@ -159,6 +159,7 @@ git clone https://github.com/fkxianzhou/ComfyUI-Jimeng-API
   - `aspectRatio`: `21:9`、`16:9`、`4:3`、`1:1`、`3:4`、`9:16`，非法值回退为 `16:9`。
   - `resolution`: 固定 `1080p`。
   - `parts`: 第一段为文本提示词，后续按图片、视频、音频顺序追加引用素材；提示词按 `@图片1`、`@视频1`、`@音频1` 对应素材序号。
+  - 界面素材输入：`参考图片`、`参考视频`、`参考音频` 均为多行文本框，每行一个 URL 或 assetId，无需额外动态组件。
 - **素材处理方式**:
   - `public_url`（默认）: 直接把无需鉴权的公网 HTTP(S) 素材直链写入 `url` 字段，对应 Java `SandMediaRef.url`，**无需预先上传或加白审核**。
   - `asset_id`: 写入 `assetId` 字段，对应 Java `SandMediaRef.assetId`；该模式要求素材**已在渠道侧预先上传/加白审核通过**，并提供数字素材 ID。Java 项目仅在 DTO 中预留 `assetId`，未实现 `/v1/assets` 上传接口，本插件同样不代做上传/审核，只接收已获得的 ID。
@@ -169,6 +170,9 @@ git clone https://github.com/fkxianzhou/ComfyUI-Jimeng-API
 
 - **输入**: `api_key`（MAGI-2 渠道 API Key）和 `base_url`（渠道 endpoint）。`base_url` 默认值为 `https://api.sand.ai`，可按需修改。
 - **输出**: 供 `视频生成（MAGI-2）` 使用的客户端实例。
+- **独立性**: MAGI-2 不读取 `api_keys.json`，也不依赖火山方舟 SDK；即使火山节点不可用，MAGI-2 节点仍会注册到 ComfyUI。
+
+**界面用法**：在 ComfyUI 中添加 `MAGI-2 API Client` → 填入 API Key（endpoint 保持默认或按需修改）→ 添加 `视频生成（MAGI-2）` → 将客户端连接到 `client` 输入 → 填写提示词和素材 → 运行。无需额外 API 客户端、配置文件或动态素材组件。
 
 ***
 

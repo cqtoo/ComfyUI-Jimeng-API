@@ -946,15 +946,15 @@
       },
       "ref_images": {
         "name": "参考图片",
-        "tooltip": "图片公网直链或数字 assetId，按提示词中的 @图片N 顺序填写。"
+        "tooltip": "每行一个图片公网直链或数字 assetId，顺序对应 @图片1、@图片2。"
       },
       "ref_videos": {
         "name": "参考视频",
-        "tooltip": "视频公网直链或数字 assetId，按提示词中的 @视频N 顺序填写。"
+        "tooltip": "每行一个视频公网直链或数字 assetId，顺序对应 @视频1、@视频2。"
       },
       "ref_audios": {
         "name": "参考音频",
-        "tooltip": "音频公网直链或数字 assetId，按提示词中的 @音频N 顺序填写。"
+        "tooltip": "每行一个音频公网直链或数字 assetId，顺序对应 @音频1、@音频2。"
       },
       "duration": {
         "name": "时长 (秒)",

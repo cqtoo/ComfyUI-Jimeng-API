@@ -234,6 +234,11 @@ const AUTOGROW_LABEL_RULES = {
         { prefix: "ref_video_", zhLabel: "参考视频", enLabel: "Ref Video" },
         { prefix: "ref_audio_", zhLabel: "参考音频", enLabel: "Ref Audio" },
     ],
+    MagiVideoGenerate: [
+        { prefix: "ref_image_", zhLabel: "参考图片", enLabel: "Ref Image" },
+        { prefix: "ref_video_", zhLabel: "参考视频", enLabel: "Ref Video" },
+        { prefix: "ref_audio_", zhLabel: "参考音频", enLabel: "Ref Audio" },
+    ],
 };
 
 // ComfyUI frontend 1.45.x creates DynamicCombo children with names such as
@@ -253,6 +258,22 @@ const DYNAMIC_WIDGET_ZH_LABELS = {
         thinking: "提示词优化",
         generation_count: "生成数量",
         watermark: "水印",
+    },
+    MagiVideoGenerate: {
+        client: "客户端",
+        model: "模型",
+        prompt: "提示词",
+        material_mode: "素材模式",
+        ref_images: "参考图片（每行一个）",
+        ref_videos: "参考视频（每行一个）",
+        ref_audios: "参考音频（每行一个）",
+        duration: "时长 (秒)",
+        aspect_ratio: "宽高比",
+        resolution: "分辨率",
+        generation_count: "生成数量",
+        poll_interval: "轮询间隔 (秒)",
+        timeout: "超时 (秒)",
+        filename_prefix: "文件名前缀",
     },
     JimengSeedance2: {
         prompt: "提示词",
@@ -783,7 +804,10 @@ app.registerExtension({
     },
 
     nodeCreated(node) {
-        if (!node.comfyClass || !node.comfyClass.startsWith("Jimeng")) return;
+        if (
+            !node.comfyClass ||
+            (!node.comfyClass.startsWith("Jimeng") && !node.comfyClass.startsWith("Magi"))
+        ) return;
 
         // 劫持 configure 方法以检测是否处于加载/配置阶段
         const origConfigure = node.configure;
